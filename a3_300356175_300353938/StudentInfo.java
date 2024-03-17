@@ -15,12 +15,12 @@ public class StudentInfo {
 
     public static void display() {
 
-        System.out.println("************************************************************");
-        System.out.println("*                                                          *");
-        System.out.println("*                                                          *");
-        System.out.println("*                                                          *");
-        System.out.println("*                                                          *");
-        System.out.println("************************************************************");
+        System.out.println("**************************************************************");
+        System.out.println("*   Josh Gnanapragasam 300356175, Section C03                *");
+        System.out.println("*   Assim Saleh, 300353938, Section A00                      *");
+        System.out.println("*                                                            *");
+        System.out.println("*                                                            *");
+        System.out.println("**************************************************************");
         System.out.println();
 
     }
