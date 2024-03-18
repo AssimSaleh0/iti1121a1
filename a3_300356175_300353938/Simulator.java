@@ -67,11 +67,16 @@ public class Simulator {
 
 	/**
 	 * @param lot   is the parking lot to be simulated
+	 * @param perHourArrivalRate  is the rate at which cars arrive per hour
 	 * @param steps is the total number of steps for simulation
 	 */
 	public Simulator(ParkingLot lot, int perHourArrivalRate, int steps) {
-	
-		throw new UnsupportedOperationException("This method has not been implemented yet!");
+        this.lot = lot;
+        this.probabilityOfArrivalPerSec = new Rational(perHourArrivalRate, NUM_SECONDS_IN_1H);
+        this.steps = steps;
+        this.clock = 0;
+        this.incomingQueue = new LinkedQueue<>();
+        this.outgoingQueue = new LinkedQueue<>();
 	}
 
 
@@ -81,14 +86,45 @@ public class Simulator {
 	 * NOTE: Make sure your implementation of simulate() uses peek() from the Queue interface.
 	 */
 	public void simulate() {
-	
-		throw new UnsupportedOperationException("This method has not been implemented yet!");
-	
-	}
+        for (clock = 0; clock < steps; clock++) {
+            // Simulate car arrival
+            if (RandomGenerator.eventOccurred(probabilityOfArrivalPerSec)) {
+                String plateNumber = RandomGenerator.generateRandomString(PLATE_NUM_LENGTH);
+                Car arrivingCar = new Car(plateNumber); // Assuming a constructor Car(String plateNumber) exists
+                incomingQueue.enqueue(new Spot(arrivingCar, clock));
+            }
 
+            // Attempt to park cars from the incoming queue
+            while (!incomingQueue.isEmpty() && lot.attemptParking(incomingQueue.peek().getCar(), clock)) {
+                incomingQueue.dequeue(); // Car was parked successfully, remove it from the queue
+            }
+
+            // Simulate car departure
+            int i = 0;
+            while (i < lot.getOccupancy()) {
+                Spot spot = lot.getSpotAt(i);
+                int parkedDuration = clock - spot.getTimestamp();
+                boolean shouldDepart = parkedDuration >= MAX_PARKING_DURATION ||
+                                       RandomGenerator.eventOccurred(departurePDF.pdf(parkedDuration));
+                if (shouldDepart) {
+                    lot.remove(i);
+                    // Do not increment i, as the next spot will shift to the current index
+                } else {
+                    i++; // Only increment i if a car has not departed
+                }
+            }
+
+        }
+    }
+    
+
+    /**
+     * Get the size of the incoming queue after a simulation run.
+     *
+     * @return the size of the incoming queue.
+     */
 	public int getIncomingQueueSize() {
-	
-		throw new UnsupportedOperationException("This method has not been implemented yet!");
+		return incomingQueue.size();
 	
 	}
 }
