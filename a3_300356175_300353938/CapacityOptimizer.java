@@ -3,11 +3,37 @@ public class CapacityOptimizer {
 
 	private static final double THRESHOLD = 5.0d;
 
-	public static int getOptimalNumberOfSpots(int hourlyRate) {
-	
-		throw new UnsupportedOperationException("This method has not been implemented yet!");
-	
-	}
+    public static int getOptimalNumberOfSpots(int hourlyRate) {
+        int optimalNumberOfSpots = 1; // Start with the minimum number of spots
+
+        while (true) {
+            double averageQueueLength = 0;
+            for (int i = 0; i < NUM_RUNS; i++) {
+                // Run the simulation for the current number of spots
+                Simulator sim = new Simulator(new ParkingLot(optimalNumberOfSpots), hourlyRate, Simulator.SIMULATION_DURATION);
+                sim.simulate();
+                averageQueueLength += sim.getIncomingQueueSize();
+            }
+            averageQueueLength /= NUM_RUNS;
+
+            // Print out the simulation result for the current number of spots
+            System.out.println("==== Setting lot capacity to: " + optimalNumberOfSpots + "====");
+            for (int i = 0; i < NUM_RUNS; i++) {
+                // The printed queue length is just a placeholder since you're printing after the simulations are done
+                System.out.println("Simulation run " + (i + 1) + ": Queue length at the end of simulation run: " + averageQueueLength);
+            }
+
+            // If the average queue length is less than or equal to the threshold, then we've found our optimal number of spots
+            if (averageQueueLength <= THRESHOLD) {
+                break;
+            }
+
+            // Otherwise, increase the number of spots and try again
+            optimalNumberOfSpots++;
+        }
+
+        return optimalNumberOfSpots;
+    }
 
 	public static void main(String args[]) {
 	

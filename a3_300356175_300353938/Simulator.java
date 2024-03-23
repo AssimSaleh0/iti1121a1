@@ -85,37 +85,60 @@ public class Simulator {
 	 * instance variable
 	 * NOTE: Make sure your implementation of simulate() uses peek() from the Queue interface.
 	 */
-	public void simulate() {
+public void simulate() {
+    // Initial validation to ensure the parking lot and probabilities are set correctly
+    if (lot == null || probabilityOfArrivalPerSec == null || steps <= 0) {
+        throw new IllegalArgumentException("Simulation parameters cannot be null or non-positive.");
+    }
+
+    try {
         for (clock = 0; clock < steps; clock++) {
             // Simulate car arrival
             if (RandomGenerator.eventOccurred(probabilityOfArrivalPerSec)) {
                 String plateNumber = RandomGenerator.generateRandomString(PLATE_NUM_LENGTH);
-                Car arrivingCar = new Car(plateNumber); // Assuming a constructor Car(String plateNumber) exists
+                if (plateNumber == null || plateNumber.length() != PLATE_NUM_LENGTH) {
+                    throw new IllegalArgumentException("Generated plate number is invalid.");
+                }
+                Car arrivingCar = new Car(plateNumber);
                 incomingQueue.enqueue(new Spot(arrivingCar, clock));
             }
 
             // Attempt to park cars from the incoming queue
-            while (!incomingQueue.isEmpty() && lot.attemptParking(incomingQueue.peek().getCar(), clock)) {
-                incomingQueue.dequeue(); // Car was parked successfully, remove it from the queue
+            while (!incomingQueue.isEmpty()) {
+                Spot nextSpot = incomingQueue.peek();
+                if (nextSpot == null || nextSpot.getCar() == null) {
+                    throw new IllegalStateException("Next spot or car is null.");
+                }
+                if (lot.attemptParking(nextSpot.getCar(), clock)) {
+                    incomingQueue.dequeue();
+                } else {
+                    break;
+                }
             }
 
             // Simulate car departure
             int i = 0;
             while (i < lot.getOccupancy()) {
                 Spot spot = lot.getSpotAt(i);
+                if (spot == null) {
+                    throw new IllegalStateException("Spot retrieved is null.");
+                }
                 int parkedDuration = clock - spot.getTimestamp();
-                boolean shouldDepart = parkedDuration >= MAX_PARKING_DURATION ||
-                                       RandomGenerator.eventOccurred(departurePDF.pdf(parkedDuration));
-                if (shouldDepart) {
+                if (parkedDuration >= MAX_PARKING_DURATION ||
+                        RandomGenerator.eventOccurred(departurePDF.pdf(parkedDuration))) {
                     lot.remove(i);
-                    // Do not increment i, as the next spot will shift to the current index
                 } else {
-                    i++; // Only increment i if a car has not departed
+                    i++;
                 }
             }
-
         }
+    } catch (Exception e) {
+        // Log the exception and potentially rethrow it or handle it as appropriate for your application
+        System.err.println("An error occurred during simulation: " + e.getMessage());
+        e.printStackTrace();
+        // You might want to rethrow the exception or handle it according to your application's needs
     }
+}
     
 
     /**
